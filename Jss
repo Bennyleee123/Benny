@@ -1,0 +1,98 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const giftDisplay = document.getElementById('giftDisplay');
+    const drawButton = document.getElementById('drawButton');
+    const result = document.getElementById('result');
+    const remainingDraws = document.getElementById('remainingDraws');
+    const historyList = document.getElementById('historyList');
+    const gifts = [
+        "2号大礼包", "1号大礼包", "3号大礼包", "1号大礼包", "2号大礼包",
+        "3号大礼包", "2号大礼包", "1号大礼包", "3号大礼包", "2号大礼包",
+        "1号大礼包", "3号大礼包", "1号大礼包", "2号大礼包", "3号大礼包",
+        "2号大礼包", "1号大礼包", "3号大礼包", "1号大礼包", "2号大礼包",
+        "3号大礼包", "2号大礼包", "1号大礼包", "3号大礼包", "1号大礼包",
+        "2号大礼包", "3号大礼包", "2号大礼包", "1号大礼包", "3号大礼包",
+        "1号大礼包", "2号大礼包", "3号大礼包", "2号大礼包", "1号大礼包",
+        "3号大礼包", "1号大礼包", "2号大礼包", "3号大礼包", "2号大礼包",
+        "1号大礼包", "3号大礼包", "1号大礼包", "2号大礼包", "3号大礼包",
+        "2号大礼包", "1号大礼包", "3号大礼包", "1号大礼包", "2号大礼包",
+        "3号大礼包", "2号大礼包", "1号大礼包", "3号大礼包", "1号大礼包",
+        "2号大礼包", "3号大礼包", "2号大礼包", "1号大礼包", "3号大礼包"
+    ];
+
+    // 渲染大礼包（含图像占位符）
+    gifts.forEach(gift => {
+        const giftElement = document.createElement('div');
+        giftElement.className = 'gift-item';
+        const imgSrc = gift.includes('1号') ? 'https://via.placeholder.com/100?text=1号' :
+                      gift.includes('2号') ? 'https://via.placeholder.com/100?text=2号' :
+                      'https://via.placeholder.com/100?text=3号';
+        giftElement.innerHTML = `<img src="${imgSrc}" alt="${gift}"><span>${gift}</span>`;
+        giftDisplay.appendChild(giftElement);
+    });
+
+    // 抽奖数据（使用localStorage模拟每日限制）
+    let drawsToday = parseInt(localStorage.getItem('drawsToday') || '0');
+    const maxDraws = 3;
+    updateDraws();
+
+    // 更新抽奖次数显示
+    function updateDraws() {
+        remainingDraws.textContent = maxDraws - drawsToday;
+        if (drawsToday >= maxDraws) {
+            drawButton.disabled = true;
+        } else {
+            drawButton.disabled = false;
+        }
+    }
+
+    // 抽奖功能
+    drawButton.onclick = () => {
+        if (drawsToday >= maxDraws) {
+            result.textContent = '今日抽奖次数已用完，请明天再试！';
+            return;
+        }
+
+        const randomGift = gifts[Math.floor(Math.random() * gifts.length)];
+        result.textContent = `抽奖中...`;
+        
+        // 模拟抽奖动画（滚动效果）
+        let animation = setInterval(() => {
+            const tempGift = gifts[Math.floor(Math.random() * gifts.length)];
+            result.textContent = `抽奖中... ${tempGift}`;
+        }, 100);
+
+        // 3秒后停止动画，显示结果
+        setTimeout(() => {
+            clearInterval(animation);
+            result.textContent = `恭喜你抽中：${randomGift}！`;
+            result.className = 'result success';
+            
+            // 记录历史
+            addToHistory(randomGift);
+            drawsToday++;
+            localStorage.setItem('drawsToday', drawsToday);
+            updateDraws();
+            
+            // 重置每日抽奖（模拟24小时后清零）
+            const now = new Date();
+            const resetTime = new Date(now);
+            resetTime.setHours(24, 0, 0, 0);
+            const timeUntilReset = resetTime - now;
+            setTimeout(() => {
+                localStorage.setItem('drawsToday', '0');
+                drawsToday = 0;
+                updateDraws();
+            }, timeUntilReset);
+        }, 3000);
+    };
+
+    // 添加抽奖历史
+    function addToHistory(gift) {
+        const li = document.createElement('li');
+        li.textContent = `${new Date().toLocaleTimeString()} - ${gift}`;
+        historyList.insertBefore(li, historyList.firstChild);
+        if (historyList.children.length > 10) {
+            historyList.removeChild(historyList.lastChild);
+        }
+    }
+});
